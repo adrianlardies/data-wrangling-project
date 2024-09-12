@@ -164,33 +164,3 @@ def calculate_investment_evolution(df):
 
     # Retornar el dataframe final con la evolución de las inversiones añadida
     return df
-
-# Función para graficar la evolución de la inversión
-def graficar_evolucion_inversion(df):
-    # Asegurar que las columnas de fecha estén en formato datetime
-    df['date'] = pd.to_datetime(df['date'])
-
-    plt.figure(figsize=(12, 8))  # Tamaño del gráfico
-
-    # Graficar la inversión en Bitcoin
-    plt.plot(df['date'], df['investment_bitcoin'], label='Inversión en Bitcoin', color='orange', linewidth=2)
-
-    # Graficar la inversión en Oro
-    plt.plot(df['date'], df['investment_gold'], label='Inversión en Oro', color='gold', linewidth=2)
-
-    # Graficar la inversión en S&P 500
-    plt.plot(df['date'], df['investment_sp500'], label='Inversión en S&P 500', color='green', linewidth=2)
-
-    # Título y etiquetas
-    plt.title('Evolución de la inversión de $100 mensuales en Bitcoin, Oro y S&P 500', fontsize=16)
-    plt.xlabel('Fecha', fontsize=12)
-    plt.ylabel('Valor de la Inversión ($)', fontsize=12)
-
-    # Añadir leyenda
-    plt.legend(loc='upper left', fontsize=10)
-
-    # Añadir cuadrícula para facilitar la lectura
-    plt.grid(True)
-
-    # Mostrar el gráfico
-    plt.show()
