@@ -4,6 +4,16 @@ import requests
 from dotenv import load_dotenv  # Para cargar variables de entorno como la API key
 import os
 import matplotlib.pyplot as plt  # Importar la librería para gráficos
+import seaborn as sns
+
+# Definir las fechas clave de los eventos
+covid_crash_date = pd.Timestamp('2020-03-23')  # Mínimo durante la crisis del COVID-19
+post_covid_peak_date = pd.Timestamp('2021-11-10')  # Pico de Bitcoin en 2021
+rate_hike_start_date = pd.Timestamp('2022-01-01')  # Inicio del aumento de las tasas en 2022
+inflation_peak_2021_start = pd.Timestamp('2021-01-01')  # Inicio del aumento fuerte de la inflación en 2021
+inflation_peak_2021_end = pd.Timestamp('2022-01-01')    # Inflación sigue alta hacia principios de 2022
+bitcoin_peak_date = pd.Timestamp('2021-11-10')  # Pico de Bitcoin en 2021
+bitcoin_drop_date = pd.Timestamp('2022-06-18')  # Caída importante en 2022
 
 # Función para obtener los datos del VIX (índice de volatilidad implícita)
 # Se descarga el historial de los últimos 10 años desde Yahoo Finance y se limpian las columnas no necesarias
@@ -164,3 +174,453 @@ def calculate_investment_evolution(df):
 
     # Retornar el dataframe final con la evolución de las inversiones añadida
     return df
+
+# Función para generar el gráfico de precios con escala logarítmica y anotaciones
+def plot_evolution_of_prices_with_events(df_combined):
+    plt.figure(figsize=(12, 8))
+
+    # Trazar las líneas de los precios
+    plt.plot(df_combined['date'], df_combined['price_bitcoin'], label='Bitcoin', color='orange')
+    plt.plot(df_combined['date'], df_combined['price_gold'], label='Oro', color='gold')
+    plt.plot(df_combined['date'], df_combined['price_sp500'], label='S&P 500', color='blue')
+
+    # Añadir escala logarítmica en el eje Y
+    plt.yscale('log')
+
+    # Eventos importantes de Bitcoin
+    plt.axvline(pd.Timestamp('2016-07-09'), color='gray', linestyle='--', linewidth=1)
+    plt.text(pd.Timestamp('2016-07-09'), 100, 'Bitcoin Halving (2016)', rotation=90, verticalalignment='bottom')
+
+    plt.axvline(pd.Timestamp('2020-05-11'), color='gray', linestyle='--', linewidth=1)
+    plt.text(pd.Timestamp('2020-05-11'), 100, 'Bitcoin Halving (2020)', rotation=90, verticalalignment='bottom')
+
+    plt.axvline(pd.Timestamp('2021-02-08'), color='gray', linestyle='--', linewidth=1)
+    plt.text(pd.Timestamp('2021-02-08'), 100, 'Tesla compra Bitcoin', rotation=90, verticalalignment='bottom')
+
+    plt.axvline(pd.Timestamp('2021-05-12'), color='gray', linestyle='--', linewidth=1)
+    plt.text(pd.Timestamp('2021-05-12'), 100, 'Tesla deja de aceptar Bitcoin', rotation=90, verticalalignment='bottom')
+
+    # Eventos importantes del oro
+    plt.axvline(pd.Timestamp('2020-08-01'), color='gray', linestyle='--', linewidth=1)
+    plt.text(pd.Timestamp('2020-08-01'), 4000, 'Máximo histórico del oro (2020)', rotation=90, verticalalignment='bottom')
+
+    # Eventos importantes del S&P 500
+    plt.axvline(pd.Timestamp('2020-03-01'), color='gray', linestyle='--', linewidth=1)
+    plt.text(pd.Timestamp('2020-03-01'), 400, 'Crisis por COVID-19', rotation=90, verticalalignment='bottom')
+
+    # Títulos y etiquetas
+    plt.title('Evolución de los Precios: Bitcoin, Oro y S&P 500 (Escala Logarítmica) con Eventos Clave')
+    plt.xlabel('Fecha')
+    plt.ylabel('Precio ($)')
+    plt.xlim(pd.Timestamp('2015-01-01'), pd.Timestamp('2024-12-31'))  # Limitar el eje X entre 2015 y 2024
+    plt.legend()
+    plt.grid(True)
+
+    # Mostrar el gráfico
+    plt.show()
+
+    # Función para obtener el valor de la inversión en las fechas clave más cercanas
+def get_closest_investment_value(df, target_date):
+    closest_row = df.iloc[(df['date'] - target_date).abs().argmin()]
+    investment_bitcoin = closest_row['investment_bitcoin']
+    investment_gold = closest_row['investment_gold']
+    investment_sp500 = closest_row['investment_sp500']
+    actual_date = closest_row['date']
+    return investment_bitcoin, investment_gold, investment_sp500, actual_date
+
+# Función para graficar la evolución de la inversión con fechas clave
+def plot_investment_evolution_with_key_dates(df_combined):
+    # Fechas clave
+    start_date = pd.Timestamp('2015-01-01')
+    bitcoin_peak_date = pd.Timestamp('2021-04-14')  # Pico de Bitcoin en abril de 2021
+    end_date = pd.Timestamp('2024-02-09')  # Fecha final en el DataFrame
+
+    # Obtener los valores de inversión más cercanos a las fechas clave
+    investment_start = get_closest_investment_value(df_combined, start_date)
+    investment_bitcoin_peak = get_closest_investment_value(df_combined, bitcoin_peak_date)
+    investment_end = get_closest_investment_value(df_combined, end_date)
+
+    # Crear gráfico con escala logarítmica para la inversión en Bitcoin, Oro y S&P 500
+    plt.figure(figsize=(10, 6))
+
+    # Graficar las líneas de inversión
+    plt.plot(df_combined['date'], df_combined['investment_bitcoin'], label='Inversión en Bitcoin', color='orange')
+    plt.plot(df_combined['date'], df_combined['investment_gold'], label='Inversión en Oro', color='gold')
+    plt.plot(df_combined['date'], df_combined['investment_sp500'], label='Inversión en S&P 500', color='blue')
+
+    # Añadir escala logarítmica en el eje Y
+    plt.yscale('log')
+
+    # Añadir anotaciones de fechas clave
+    plt.axvline(start_date, color='gray', linestyle='--', linewidth=1)
+    plt.text(start_date, investment_start[0], 'Inicio (2015)', rotation=90, verticalalignment='bottom')
+
+    plt.axvline(bitcoin_peak_date, color='gray', linestyle='--', linewidth=1)
+    plt.text(bitcoin_peak_date, investment_bitcoin_peak[0], 'Pico de Bitcoin (2021)', rotation=90, verticalalignment='bottom')
+
+    plt.axvline(end_date, color='gray', linestyle='--', linewidth=1)
+    plt.text(end_date, investment_end[0], 'Final (2024)', rotation=90, verticalalignment='bottom')
+
+    # Títulos y etiquetas
+    plt.title('Evolución de una Inversión de $100 mensuales en Bitcoin, Oro y S&P 500 (Escala Logarítmica)')
+    plt.xlabel('Fecha')
+    plt.ylabel('Valor de la inversión ($)')
+    plt.legend()
+    plt.grid(True)
+
+    # Mostrar el gráfico
+    plt.show()
+
+# Función para graficar el VIX junto con Bitcoin, Oro y S&P 500
+def plot_vix_vs_prices(df_combined):
+    # Crear gráfico mejorado con VIX, Bitcoin, Oro y S&P 500
+    fig, ax1 = plt.subplots(figsize=(10, 6))
+    ax2 = ax1.twinx()
+
+    # Graficar VIX
+    ax1.plot(df_combined['date'], df_combined['vix'], color='green', label='VIX')
+
+    # Graficar Bitcoin y Oro
+    ax2.plot(df_combined['date'], df_combined['price_bitcoin'], color='orange', label='Bitcoin')
+    ax2.plot(df_combined['date'], df_combined['price_gold'], color='gold', label='Oro')
+
+    # Añadir S&P 500
+    ax2.plot(df_combined['date'], df_combined['price_sp500'], color='blue', label='S&P 500')
+
+    # Añadir etiquetas y leyendas
+    ax1.set_xlabel('Fecha')
+    ax1.set_ylabel('VIX', color='green')
+    ax2.set_ylabel('Precio ($)', color='blue')
+    ax1.tick_params(axis='y', labelcolor='green')
+    ax2.tick_params(axis='y', labelcolor='blue')
+
+    # Añadir título y leyenda
+    plt.title('VIX (Volatilidad) vs Precio de Bitcoin, Oro y S&P 500')
+    ax2.legend(loc='upper left')
+
+    # Mostrar gráfico
+    plt.grid(True)
+    plt.show()
+
+# Función para encontrar los picos más altos del VIX
+def get_vix_peak_dates(df, n=3):
+    return df.nlargest(n, 'vix')['date'].values
+
+# Función para calcular los cambios porcentuales en los precios antes y después del evento
+def calculate_percentage_change(df, event_date, column, window_days=30):
+    # Filtrar los datos dentro de la ventana antes y después del evento
+    before_event = df[(df['date'] >= event_date - pd.Timedelta(days=window_days)) & (df['date'] < event_date)]
+    after_event = df[(df['date'] > event_date) & (df['date'] <= event_date + pd.Timedelta(days=window_days))]
+    
+    # Obtener el valor antes y después del evento
+    value_before = before_event[column].iloc[-1] if not before_event.empty else None
+    value_after = after_event[column].iloc[0] if not after_event.empty else None
+    
+    if value_before is not None and value_after is not None:
+        # Calcular el cambio porcentual
+        change_percentage = ((value_after - value_before) / value_before) * 100
+        return change_percentage, value_before, value_after
+    return None, None, None
+
+# Función para analizar los picos del VIX y calcular los cambios porcentuales de precios
+def analyze_vix_peaks_and_price_changes(df_combined, window_days=30):
+    # Encontrar los picos más altos del VIX
+    vix_peak_dates = get_vix_peak_dates(df_combined)
+    
+    # Calcular los cambios porcentuales en los precios de Bitcoin, Oro y S&P 500
+    price_changes = {}
+    for event_date in vix_peak_dates:
+        price_changes[str(event_date)] = {
+            'Bitcoin': calculate_percentage_change(df_combined, pd.Timestamp(event_date), 'price_bitcoin', window_days),
+            'Oro': calculate_percentage_change(df_combined, pd.Timestamp(event_date), 'price_gold', window_days),
+            'S&P 500': calculate_percentage_change(df_combined, pd.Timestamp(event_date), 'price_sp500', window_days)
+        }
+    
+    # Retornar los resultados
+    return price_changes
+
+# Función para graficar la tasa de interés junto con Bitcoin, Oro y S&P 500
+def plot_interest_vs_prices(df_combined):
+    # Crear gráfico que muestra la tasa de interés, Bitcoin, Oro y S&P 500
+    fig, ax1 = plt.subplots(figsize=(10, 6))
+    ax2 = ax1.twinx()
+
+    # Graficar tasa de interés en el eje izquierdo
+    ax1.plot(df_combined['date'], df_combined['interest_rate'], color='red', label='Tasa de interés')
+
+    # Graficar Bitcoin, Oro y S&P 500 en el eje derecho
+    ax2.plot(df_combined['date'], df_combined['price_bitcoin'], color='orange', label='Bitcoin')
+    ax2.plot(df_combined['date'], df_combined['price_gold'], color='gold', label='Oro')
+    ax2.plot(df_combined['date'], df_combined['price_sp500'], color='blue', label='S&P 500')
+
+    # Añadir etiquetas y leyendas
+    ax1.set_xlabel('Fecha')
+    ax1.set_ylabel('Tasa de interés (%)', color='red')
+    ax2.set_ylabel('Precio ($)', color='blue')
+    ax1.tick_params(axis='y', labelcolor='red')
+    ax2.tick_params(axis='y', labelcolor='blue')
+
+    # Añadir título y leyenda
+    plt.title('Tasa de Interés vs Precios de Bitcoin, Oro y S&P 500')
+    ax2.legend(loc='upper left')
+
+    # Añadir grid
+    plt.grid(True)
+
+    # Mostrar gráfico
+    plt.show()
+
+# Función para encontrar las fechas más cercanas a los eventos clave
+def get_closest_value(df, target_date, column):
+    closest_row = df.iloc[(df['date'] - target_date).abs().argmin()]
+    return closest_row[column], closest_row['date']
+
+# Función para calcular el cambio porcentual entre dos fechas clave
+def calculate_percentage_change_closest(df, start_date, end_date, column):
+    before_event, actual_start_date = get_closest_value(df, start_date, column)
+    after_event, actual_end_date = get_closest_value(df, end_date, column)
+    change_percentage = ((after_event - before_event) / before_event) * 100
+    return change_percentage, before_event, after_event, actual_start_date, actual_end_date
+
+# Función para analizar cambios porcentuales en eventos clave
+def analyze_event_price_changes(df_combined):
+    # Calcular los cambios porcentuales durante los eventos clave de COVID-19 y el aumento de tasas
+    price_changes_covid = {
+        'Bitcoin': calculate_percentage_change_closest(df_combined, covid_crash_date, post_covid_peak_date, 'price_bitcoin'),
+        'Oro': calculate_percentage_change_closest(df_combined, covid_crash_date, post_covid_peak_date, 'price_gold'),
+        'S&P 500': calculate_percentage_change_closest(df_combined, covid_crash_date, post_covid_peak_date, 'price_sp500')
+    }
+
+    price_changes_rate_hike = {
+        'Bitcoin': calculate_percentage_change_closest(df_combined, post_covid_peak_date, rate_hike_start_date, 'price_bitcoin'),
+        'Oro': calculate_percentage_change_closest(df_combined, post_covid_peak_date, rate_hike_start_date, 'price_gold'),
+        'S&P 500': calculate_percentage_change_closest(df_combined, post_covid_peak_date, rate_hike_start_date, 'price_sp500')
+    }
+
+    # Retornar los resultados
+    return price_changes_covid, price_changes_rate_hike
+
+# Función para graficar la inflación junto con Bitcoin, Oro y S&P 500
+def plot_inflation_comparison(df_combined):
+    # Crear gráfico mejorado que compara la inflación con los precios de Bitcoin, Oro y S&P 500
+    fig, ax1 = plt.subplots(figsize=(10, 6))
+    ax2 = ax1.twinx()
+
+    # Graficar inflación en el eje izquierdo
+    ax1.plot(df_combined['date'], df_combined['inflation'], color='red', linestyle='--', label='Inflación')
+
+    # Graficar Bitcoin, Oro y S&P 500 en el eje derecho
+    ax2.plot(df_combined['date'], df_combined['price_bitcoin'], color='orange', label='Bitcoin')
+    ax2.plot(df_combined['date'], df_combined['price_gold'], color='gold', label='Oro')
+    ax2.plot(df_combined['date'], df_combined['price_sp500'], color='blue', label='S&P 500')
+
+    # Añadir etiquetas y leyendas
+    ax1.set_xlabel('Fecha')
+    ax1.set_ylabel('Inflación (%)', color='red')
+    ax2.set_ylabel('Precio ($)', color='blue')
+    ax1.tick_params(axis='y', labelcolor='red')
+    ax2.tick_params(axis='y', labelcolor='blue')
+
+    # Añadir título y leyenda
+    plt.title('Comparación del Precio de Bitcoin, Oro y S&P 500 con la Inflación')
+    ax2.legend(loc='upper left')
+
+    # Añadir grid
+    plt.grid(True)
+
+    # Mostrar gráfico
+    plt.show()
+
+# Función para encontrar el valor más cercano a una fecha en particular
+def get_closest_value(df, target_date, column):
+    closest_row = df.iloc[(df['date'] - target_date).abs().argmin()]
+    return closest_row[column], closest_row['date']
+
+# Función para calcular los cambios porcentuales en los precios antes y después del evento
+def calculate_percentage_change_period(df, start_date, end_date, column):
+    before_event, actual_start_date = get_closest_value(df, start_date, column)
+    after_event, actual_end_date = get_closest_value(df, end_date, column)
+    change_percentage = ((after_event - before_event) / before_event) * 100
+    return change_percentage, before_event, after_event, actual_start_date, actual_end_date
+
+# Función para analizar cambios de precios durante el pico de inflación (2021-2022)
+def analyze_inflation_peak_price_changes(df_combined):
+    # Calcular los cambios porcentuales para Bitcoin, Oro y S&P 500 durante el periodo de inflación alta (2021-2022)
+    price_changes_inflation_2021 = {
+        'Bitcoin': calculate_percentage_change_period(df_combined, inflation_peak_2021_start, inflation_peak_2021_end, 'price_bitcoin'),
+        'Oro': calculate_percentage_change_period(df_combined, inflation_peak_2021_start, inflation_peak_2021_end, 'price_gold'),
+        'S&P 500': calculate_percentage_change_period(df_combined, inflation_peak_2021_start, inflation_peak_2021_end, 'price_sp500')
+    }
+
+    return price_changes_inflation_2021
+
+def plot_correlation_heatmap(df_combined):
+    # Reordenar las columnas para una visualización más lógica
+    ordered_columns = ['price_bitcoin', 'price_gold', 'price_sp500', 'inflation', 'interest_rate', 'vix']
+    corr_matrix_ordered = df_combined[ordered_columns].corr()
+
+    # Crear una nueva figura para el mapa de calor mejorado
+    plt.figure(figsize=(10, 6))
+
+    # Crear el mapa de calor mejorado con anotaciones más claras
+    sns.heatmap(corr_matrix_ordered, annot=True, cmap="coolwarm", vmin=-1, vmax=1, annot_kws={"size": 10}, linewidths=0.5, linecolor='gray')
+
+    # Añadir título y ajustar etiquetas
+    plt.title('Mapa de Calor de Correlación entre Variables (Mejorado)', fontsize=14)
+    plt.xticks(rotation=45)
+    plt.yticks(rotation=0)
+
+    # Mostrar el gráfico
+    plt.show()
+
+# Función para crear un gráfico de área apilada de la inversión en Bitcoin, Oro y S&P 500
+def plot_stacked_investment_growth(df_combined):
+    # Crear gráfico de área apilada mejorado con transparencia y anotaciones clave
+    plt.figure(figsize=(10, 6))
+
+    # Añadir transparencia a las áreas para que se puedan ver mejor las contribuciones
+    plt.stackplot(df_combined['date'], 
+                  df_combined['investment_bitcoin'], 
+                  df_combined['investment_gold'], 
+                  df_combined['investment_sp500'], 
+                  labels=['Bitcoin', 'Oro', 'S&P 500'], 
+                  colors=['orange', 'gold', 'blue'], alpha=0.8)
+
+    # Añadir títulos y etiquetas
+    plt.title('Evolución Acumulada de la Inversión en Bitcoin, Oro y S&P 500 (Mejorado)')
+    plt.xlabel('Fecha')
+    plt.ylabel('Valor de la Inversión ($)')
+
+    # Añadir leyenda
+    plt.legend(loc='upper left')
+
+    # Añadir grid
+    plt.grid(True)
+
+    # Mostrar gráfico
+    plt.show()
+
+# Función para calcular el valor total de la cartera en una fecha clave
+def calculate_portfolio_composition(df, date):
+    # Filtrar la fila más cercana a la fecha proporcionada
+    closest_row = df.iloc[(df['date'] - date).abs().argmin()]
+    total_investment = (closest_row['investment_bitcoin'] +
+                        closest_row['investment_gold'] +
+                        closest_row['investment_sp500'])
+    
+    # Calcular la proporción de cada activo
+    bitcoin_percentage = (closest_row['investment_bitcoin'] / total_investment) * 100
+    gold_percentage = (closest_row['investment_gold'] / total_investment) * 100
+    sp500_percentage = (closest_row['investment_sp500'] / total_investment) * 100
+    
+    return {
+        'Bitcoin': bitcoin_percentage,
+        'Oro': gold_percentage,
+        'S&P 500': sp500_percentage,
+        'Total ($)': total_investment
+    }
+
+# Función para calcular las proporciones de la cartera en fechas clave
+def analyze_portfolio_composition(df_combined):
+    # Calcular las proporciones de la cartera en el pico de Bitcoin y la caída en 2022
+    composition_at_peak = calculate_portfolio_composition(df_combined, bitcoin_peak_date)
+    composition_at_drop = calculate_portfolio_composition(df_combined, bitcoin_drop_date)
+    
+    return composition_at_peak, composition_at_drop
+
+# Función para crear el gráfico de dispersión con burbujas (Inflación vs Precio)
+def plot_bubble_inflation_vs_price(df_combined):
+    # Crear gráfico de dispersión con burbujas mejorado
+    plt.figure(figsize=(10, 6))
+
+    # Graficar Bitcoin
+    plt.scatter(df_combined['inflation'], df_combined['price_bitcoin'], 
+                s=df_combined['vix']*10, c='orange', alpha=0.5, label='Bitcoin', edgecolor='black', linewidth=1)
+
+    # Graficar Oro
+    plt.scatter(df_combined['inflation'], df_combined['price_gold'], 
+                s=df_combined['vix']*10, c='gold', alpha=0.5, label='Oro', edgecolor='black', linewidth=1)
+
+    # Añadir títulos y etiquetas
+    plt.title('Inflación vs Precio con Volatilidad (VIX) Representada por Tamaño (Mejorado)')
+    plt.xlabel('Inflación (%)')
+    plt.ylabel('Precio ($)')
+    plt.legend(loc='upper right')
+
+    # Añadir grid
+    plt.grid(True)
+
+    # Mostrar gráfico
+    plt.show()
+
+# Función para calcular los retornos y generar un gráfico de violín
+def plot_violin_returns(df_combined):
+    # Calcular los retornos de Bitcoin, Oro y S&P 500
+    df_combined['bitcoin_return'] = df_combined['price_bitcoin'].pct_change() * 100
+    df_combined['gold_return'] = df_combined['price_gold'].pct_change() * 100
+    df_combined['sp500_return'] = df_combined['price_sp500'].pct_change() * 100
+
+    # Crear gráfico de violín mejorado con colores diferenciados
+    plt.figure(figsize=(10, 6))
+
+    # Crear el gráfico de violín
+    sns.violinplot(data=df_combined[['bitcoin_return', 'gold_return', 'sp500_return']], palette='muted')
+
+    # Añadir título y etiquetas
+    plt.title('Distribución de Retornos para Bitcoin, Oro y S&P 500 (Mejorado)')
+    plt.ylabel('Retorno (%)')
+    plt.xticks([0, 1, 2], ['Bitcoin', 'Oro', 'S&P 500'])
+
+    # Añadir grid
+    plt.grid(True)
+
+    # Mostrar gráfico
+    plt.show()
+
+# Función para crear el gráfico de burbuja (Precio de Bitcoin vs Oro con VIX y Tasa de Interés)
+def plot_bubble_interest_vix(df_combined):
+    # Crear gráfico de burbuja mejorado ajustando los colores y tamaños para una mejor visualización
+    plt.figure(figsize=(10, 6))
+
+    # Graficar con mejor ajuste de colores y tamaños de burbujas
+    scatter = plt.scatter(df_combined['price_bitcoin'], df_combined['price_gold'], 
+                          s=df_combined['vix']*5, 
+                          c=df_combined['interest_rate'], cmap='coolwarm', alpha=0.7)
+
+    # Añadir la barra de color para las tasas de interés
+    cbar = plt.colorbar(scatter)
+    cbar.set_label('Tasa de Interés')
+
+    # Añadir título y etiquetas
+    plt.title('Precio de Bitcoin vs Oro, con VIX y Tasa de Interés (Mejorado)')
+    plt.xlabel('Precio de Bitcoin ($)')
+    plt.ylabel('Precio de Oro ($)')
+    plt.grid(True)
+
+    # Mostrar el gráfico mejorado
+    plt.show()
+
+# Función para calcular medias de precios de Bitcoin y Oro en momentos de altas tasas de interés y alta volatilidad
+def analyze_high_interest_and_volatility(df_combined):
+    # Definir umbrales clave para tasas de interés altas (>4%) y VIX alto (>30)
+    interest_rate_threshold = 4  # Tasa de interés alta (>4%)
+    vix_threshold = 30  # VIX alto (>30)
+
+    # Filtrar datos con altas tasas de interés y alta volatilidad (VIX alto)
+    high_interest_data = df_combined[df_combined['interest_rate'] > interest_rate_threshold]
+    high_vix_data = df_combined[df_combined['vix'] > vix_threshold]
+
+    # Calcular medias de precios de Bitcoin y Oro en momentos de altas tasas de interés y alta volatilidad
+    bitcoin_mean_price_high_interest = high_interest_data['price_bitcoin'].mean()
+    gold_mean_price_high_interest = high_interest_data['price_gold'].mean()
+
+    bitcoin_mean_price_high_vix = high_vix_data['price_bitcoin'].mean()
+    gold_mean_price_high_vix = high_vix_data['price_gold'].mean()
+
+    # Retornar los resultados
+    return {
+        'Bitcoin (Tasa de interés > 4%)': bitcoin_mean_price_high_interest,
+        'Oro (Tasa de interés > 4%)': gold_mean_price_high_interest,
+        'Bitcoin (VIX > 30)': bitcoin_mean_price_high_vix,
+        'Oro (VIX > 30)': gold_mean_price_high_vix
+    }
