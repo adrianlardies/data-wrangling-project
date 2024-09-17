@@ -42,7 +42,7 @@ def get_interest_data():
     return df_interest[['Date', 'interest_rate']]  # Devolver solo la fecha y la tasa de interés.
 
 # Función para obtener los datos del CPI (Índice de Precios al Consumidor) e inflación.
-# Se usa la API del Banco de Luisiana (FRED) para descargar los datos y se interpolan para obtener valores diarios.
+# Se usa la API del Banco de St. Louis (FRED) para descargar los datos y se interpolan para obtener valores diarios.
 def get_cpi_inflation_data():
     load_dotenv()  # Cargar variables de entorno desde .env para obtener la API key.
     api_key = os.getenv('API_BANK_INFLATION')  # Obtener la API key del entorno.
